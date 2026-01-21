@@ -1,0 +1,31 @@
+{
+    "name": "nahid/php-task",
+    "description": "Framework-agnostic PHP concurrency package using pcntl",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^7.4 || ^8.0",
+        "ext-pcntl": "*",
+        "ext-posix": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nahid\\PHPTask\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Nahid\\PHPTask\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Nahid",
+            "email": "nahid@example.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}
