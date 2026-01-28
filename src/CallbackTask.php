@@ -2,20 +2,28 @@
 
 namespace Nahid\PHPTask;
 
+use Laravel\SerializableClosure\SerializableClosure;
 use Nahid\PHPTask\Contracts\TaskInterface;
 
 class CallbackTask implements TaskInterface
 {
-    /** @var callable */
-    private $callback;
+    /**
+     * @var callable|SerializableClosure
+     */
+    protected $callback;
 
-    public function __construct(callable $callback)
+    public function __construct($callback)
     {
+        if ($callback instanceof \Closure) {
+            $callback = new SerializableClosure($callback);
+        }
+
         $this->callback = $callback;
     }
 
     public function handle()
     {
+        // SerializableClosure is invokable
         return call_user_func($this->callback);
     }
 }

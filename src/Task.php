@@ -2,7 +2,8 @@
 
 namespace Nahid\PHPTask;
 
-use Nahid\PHPTask\Process\ForkManager;
+use Nahid\PHPTask\Process\ProcessManager;
+use Nahid\PHPTask\Contracts\TaskBootstrapInterface;
 
 class Task
 {
@@ -10,126 +11,120 @@ class Task
     private $concurrencyLimit = -1;
 
     /** @var int|null */
+    private $outputLimit = null;
+
+    /** @var int|null */
     private $timeout = null;
 
     /** @var bool */
     private $failFast = true;
 
+    /** @var TaskBootstrapInterface|string|null */
+    private $bootstrap = null;
+
     /**
      * Set concurrency limit.
-     *
-     * @param int $limit
-     * @return self
      */
-    public static function limit(int $limit): self
+    protected function setLimit(int $limit): self
     {
-        $instance = new self();
-        $instance->concurrencyLimit = $limit;
-        return $instance;
+        $this->concurrencyLimit = $limit;
+        return $this;
     }
 
     /**
-     * Set timeout in seconds.
-     * 
-     * @param int $seconds
-     * @return self
+     * Set bootstrap (object or path).
+     *
+     * @param TaskBootstrapInterface|string|null $bootstrap
      */
-    public function timeout(int $seconds): self
+    protected function setBootstrap($bootstrap): self
+    {
+        $this->bootstrap = $bootstrap;
+        return $this;
+    }
+
+    /**
+     * Set task execution timeout in seconds.
+     */
+    protected function setTimeout(int $seconds): self
     {
         $this->timeout = $seconds;
         return $this;
     }
 
     /**
-     * Set fail-fast behavior.
-     * 
-     * @param bool $failFast
-     * @return self
+     * Set fail fast mode.
      */
-    public function failFast(bool $failFast = true): self
+    protected function setFailFast(bool $failFast = true): self
     {
         $this->failFast = $failFast;
         return $this;
     }
 
     /**
-     * Magic static call handler to support Task::async, Task::defer, and Task::concurrent.
+     * Set maximum output size in bytes for worker processes.
      */
-    public static function __callStatic($method, $args)
+    protected function setOutputLimit(int $bytes): self
     {
-        if ($method === 'async') {
-            return (new self())->runAsync(...$args);
-        }
-        if ($method === 'defer') {
-            return (new self())->runDefer(...$args);
-        }
-        if ($method === 'concurrent') {
-            (new self())->runConcurrent(...$args);
-            return;
-        }
-
-        throw new \BadMethodCallException("Static method {$method} does not exist");
+        $this->outputLimit = $bytes;
+        return $this;
     }
 
     /**
-     * Magic call handler to support $task->async, $task->defer, and $task->concurrent.
-     */
-    public function __call($method, $args)
-    {
-        if ($method === 'async') {
-            return $this->runAsync(...$args);
-        }
-        if ($method === 'defer') {
-            return $this->runDefer(...$args);
-        }
-        if ($method === 'concurrent') {
-            $this->runConcurrent(...$args);
-            return;
-        }
-
-        throw new \BadMethodCallException("Method {$method} does not exist");
-    }
-
-    /**
-     * Run tasks asynchronously.
-     *
-     * @param array $tasks
-     * @return array
-     */
-    protected function runAsync(array $tasks): array
-    {
-        $manager = $this->createManager($tasks);
-        $manager->start();
-        return $manager->wait();
-    }
-
-    /**
-     * Run tasks concurrently without returning results.
-     *
-     * @param array $tasks
-     * @return void
-     */
-    protected function runConcurrent(array $tasks): void
-    {
-        $manager = $this->createManager($tasks);
-        $manager->start();
-        $manager->wait();
-    }
-
-    /**
-     * Defer tasks (fire and return handle).
+     * Entry point for running tasks asynchronously.
+     * Retruns a TaskGroup handle for awaiting or forgetting results.
      *
      * @param array $tasks
      * @return TaskGroup
      */
-    protected function runDefer(array $tasks): TaskGroup
+    protected function executeAsync(array $tasks): TaskGroup
     {
         $manager = $this->createManager($tasks);
         $manager->start();
         return new TaskGroup($manager);
     }
 
-    private function createManager(array $tasks): ForkManager
+    /**
+     * Register a bootstrap object (static helper).
+     */
+    public static function registerBootstrap(TaskBootstrapInterface $bootstrap): self
+    {
+        return (new self())->setBootstrap($bootstrap);
+    }
+
+    /**
+     * Static entry point proxy.
+     */
+    public static function __callStatic($method, $args)
+    {
+        $instance = new self();
+        return $instance->__call($method, $args);
+    }
+
+    /**
+     * Dynamic method proxy to support fluent chaining after static calls.
+     */
+    public function __call($method, $args)
+    {
+        $map = [
+            'async' => 'executeAsync',
+            'limit' => 'setLimit',
+            'timeout' => 'setTimeout',
+            'bootstrap' => 'setBootstrap',
+            'failFast' => 'setFailFast',
+            'outputLimit' => 'setOutputLimit'
+        ];
+
+        if (isset($map[$method])) {
+            return $this->{$map[$method]}(...$args);
+        }
+
+        throw new \BadMethodCallException("Method {$method} does not exist");
+    }
+
+    /**
+     * Create and configure a ProcessManager instance.
+     */
+    private function createManager(array $tasks): ProcessManager
     {
         $normalizedTasks = [];
         foreach ($tasks as $key => $task) {
@@ -140,9 +135,19 @@ class Task
             }
         }
 
-        $manager = new ForkManager($normalizedTasks, $this->concurrencyLimit);
-        $manager->setTimeout($this->timeout);
+        $manager = new ProcessManager($normalizedTasks, $this->concurrencyLimit);
+
+        if ($this->timeout !== null) {
+            $manager->setTimeout($this->timeout);
+        }
+
+        if ($this->outputLimit !== null) {
+            $manager->setOutputLimit($this->outputLimit);
+        }
+
         $manager->setFailFast($this->failFast);
+        $manager->setBootstrap($this->bootstrap);
+
         return $manager;
     }
 }

@@ -4,7 +4,7 @@ namespace Nahid\PHPTask\IPC;
 
 use Exception;
 use Throwable;
-use Nahid\PHPTask\Exceptions\TaskException;
+use Laravel\SerializableClosure\SerializableClosure;
 
 class Serializer
 {
@@ -28,6 +28,10 @@ class Serializer
             ]);
         }
 
+        if ($data instanceof \Closure) {
+            $data = new SerializableClosure($data);
+        }
+
         return serialize($data);
     }
 
@@ -42,10 +46,10 @@ class Serializer
         $unserialized = unserialize($data);
 
         if (is_array($unserialized) && isset($unserialized['__is_error'])) {
-            // We return the raw error array to the process manager, 
-            // which will decide how to reconstruct the exception or handle it.
-            // But to adhere to the plan of "wrapping exceptions into arrays", 
-            // we effectively just returned it.
+            // We return the raw error array to the process manager,
+// which will decide how to reconstruct the exception or handle it.
+// But to adhere to the plan of "wrapping exceptions into arrays",
+// we effectively just returned it.
             return $unserialized;
         }
 

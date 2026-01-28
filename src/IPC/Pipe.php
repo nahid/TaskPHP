@@ -50,7 +50,7 @@ class Pipe
         // but for simple streams we might just read all.
         // Let's rely on stream_get_contents for reading everything until EOF (connection close).
         // Since we close writer after writing in child, EOF will be sent.
-        
+
         $len = strlen($data);
         $written = 0;
         while ($written < $len) {
@@ -70,22 +70,22 @@ class Pipe
     public function read(): string
     {
         if (!is_resource($this->reader)) {
-             throw new RuntimeException("Pipe reader is closed");
+            throw new RuntimeException("Pipe reader is closed");
         }
 
         $content = stream_get_contents($this->reader);
         if ($content === false) {
             throw new RuntimeException("Failed to read from pipe");
         }
-        
+
         return $content;
     }
 
-    public function getReaderResource()
+    public function getReader()
     {
         return $this->reader;
     }
-    
+
     public function close(): void
     {
         $this->closeReader();

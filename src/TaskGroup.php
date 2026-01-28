@@ -2,25 +2,48 @@
 
 namespace Nahid\PHPTask;
 
-use Nahid\PHPTask\Process\ForkManager;
+use Nahid\PHPTask\Process\ProcessManager;
 
+/**
+ * Represents a group of deferred tasks.
+ */
 class TaskGroup
 {
-    /** @var ForkManager */
+    /** @var ProcessManager */
     private $manager;
 
-    public function __construct(ForkManager $manager)
+    public function __construct(ProcessManager $manager)
     {
         $this->manager = $manager;
     }
 
     /**
+     * Terminate the tracking of these tasks. 
+     * The parent process will not wait for these tasks to finish when it exits.
+     * 
+     * @return void
+     */
+    public function forget(): void
+    {
+        $this->manager->unregister();
+    }
+
+
+
+    /**
      * Wait for all deferred tasks to complete.
      *
-     * @return array
+     * @param callable|null $callback Optional closure to process results
+     * @return mixed
      */
-    public function await(): array
+    public function await(?callable $callback = null)
     {
-        return $this->manager->wait();
+        $results = $this->manager->wait();
+
+        if (is_callable($callback)) {
+            return $callback($results);
+        }
+
+        return $results;
     }
 }
