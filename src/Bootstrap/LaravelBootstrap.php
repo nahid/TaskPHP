@@ -37,45 +37,49 @@ class LaravelBootstrap extends AbstractBootstrap
      */
     public function bootstrap(): void
     {
-        // Load Composer autoloader if not already loaded
-        if (!file_exists($this->basePath . '/vendor/autoload.php')) {
+        // 1. Find and load autoloader
+        $autoloadPath = $this->basePath . '/vendor/autoload.php';
+        if (!file_exists($autoloadPath)) {
             throw new \RuntimeException("Laravel vendor directory not found at: {$this->basePath}/vendor");
         }
+        require_once $autoloadPath;
 
-        require_once $this->basePath . '/vendor/autoload.php';
+        // 2. Create Application instance
+        // Laravel's bootstrap/app.php can return the app OR a configuration object (Laravel 11+)
+        $app = require $this->basePath . '/bootstrap/app.php';
 
-        // Create Laravel application instance
-        // We use require instead of require_once because app.php returns the instance
-        $this->app = require $this->basePath . '/bootstrap/app.php';
+        // Laravel 11+ compatibility: if it returns a builder/configurator, we need to create the app
+        if (is_object($app) && method_exists($app, 'create')) {
+            $app = $app->create();
+        }
 
-        if (!$this->app instanceof \Illuminate\Foundation\Application) {
-            // If it returns true (already required), we might have a problem or need to find it
-            if (interface_exists(\Illuminate\Contracts\Foundation\Application::class)) {
-                $this->app = \Illuminate\Support\Facades\Facade::getFacadeApplication() ?: app();
+        if (!$app instanceof \Illuminate\Contracts\Foundation\Application) {
+            // Fallback: try to find it in the Facade application or container
+            if (class_exists(\Illuminate\Support\Facades\Facade::class)) {
+                $app = \Illuminate\Support\Facades\Facade::getFacadeApplication() ?: \Illuminate\Container\Container::getInstance();
             }
         }
 
-        if (!$this->app) {
-            throw new \RuntimeException("Failed to initialize Laravel application instance.");
+        if (!$app instanceof \Illuminate\Contracts\Foundation\Application) {
+            throw new \RuntimeException("Could not obtain a valid Laravel Application instance.");
         }
 
-        // Set environment
+        $this->app = $app;
+
+        // 3. Set Instance and Environment
+        \Illuminate\Support\Facades\Facade::setFacadeApplication($this->app);
+
         if (method_exists($this->app, 'detectEnvironment')) {
             $this->app->detectEnvironment(fn() => $this->environment);
         }
 
-        // Ensure Facades work
-        if (class_exists(\Illuminate\Support\Facades\Facade::class)) {
-            \Illuminate\Support\Facades\Facade::setFacadeApplication($this->app);
-        }
-
-        // Bootstrap the application kernel
+        // 4. Bootstrap Kernel (Console)
         $kernel = $this->app->make(\Illuminate\Contracts\Console\Kernel::class);
         $kernel->bootstrap();
 
-        // Ensure Eloquent has a connection resolver
-        if ($this->app->bound('db') && class_exists(\Illuminate\Database\Eloquent\Model::class)) {
-            \Illuminate\Database\Eloquent\Model::setConnectionResolver($this->app['db']);
+        // 5. Wire up Eloquent
+        if (class_exists(\Illuminate\Database\Eloquent\Model::class) && $this->app->bound('db')) {
+            \Illuminate\Database\Eloquent\Model::setConnectionResolver($this->app->make('db'));
         }
     }
 
@@ -85,7 +89,11 @@ class LaravelBootstrap extends AbstractBootstrap
     public function beforeTask(TaskInterface $task): void
     {
         if ($this->app && $this->app->bound('db')) {
-            \DB::beginTransaction();
+            try {
+                $this->app->make('db')->beginTransaction();
+            } catch (\Throwable $e) {
+                // Ignore if DB is not configured or connection fails
+            }
         }
     }
 
@@ -95,7 +103,11 @@ class LaravelBootstrap extends AbstractBootstrap
     public function afterTask(TaskInterface $task, $result): void
     {
         if ($this->app && $this->app->bound('db')) {
-            \DB::commit();
+            try {
+                $this->app->make('db')->commit();
+            } catch (\Throwable $e) {
+                // Ignore
+            }
         }
     }
 
@@ -105,7 +117,11 @@ class LaravelBootstrap extends AbstractBootstrap
     public function onError(TaskInterface $task, \Throwable $error): void
     {
         if ($this->app && $this->app->bound('db')) {
-            \DB::rollBack();
+            try {
+                $this->app->make('db')->rollBack();
+            } catch (\Throwable $e) {
+                // Ignore
+            }
         }
     }
 
@@ -115,7 +131,9 @@ class LaravelBootstrap extends AbstractBootstrap
     public function shutdown(): void
     {
         if ($this->app) {
-            $this->app->flush();
+            if (method_exists($this->app, 'flush')) {
+                $this->app->flush();
+            }
         }
     }
 }
