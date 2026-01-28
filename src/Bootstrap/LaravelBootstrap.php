@@ -79,7 +79,13 @@ class LaravelBootstrap extends AbstractBootstrap
 
         // 5. Wire up Eloquent
         if (class_exists(\Illuminate\Database\Eloquent\Model::class) && $this->app->bound('db')) {
-            \Illuminate\Database\Eloquent\Model::setConnectionResolver($this->app->make('db'));
+            $db = $this->app->make('db');
+            \Illuminate\Database\Eloquent\Model::setConnectionResolver($db);
+
+            // Fallback for some Laravel versions: set it on the Facade as well
+            if (class_exists(\Illuminate\Support\Facades\DB::class)) {
+                \Illuminate\Support\Facades\DB::setFacadeApplication($this->app);
+            }
         }
     }
 

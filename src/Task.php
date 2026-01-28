@@ -20,6 +20,9 @@ class Task
     private $failFast = true;
 
     /** @var TaskBootstrapInterface|string|null */
+    private static $globalBootstrap = null;
+
+    /** @var TaskBootstrapInterface|string|null */
     private $bootstrap = null;
 
     /**
@@ -84,11 +87,11 @@ class Task
     }
 
     /**
-     * Register a bootstrap object (static helper).
+     * Register a bootstrap object globally for all future tasks.
      */
-    public static function registerBootstrap(TaskBootstrapInterface $bootstrap): self
+    public static function registerBootstrap(TaskBootstrapInterface $bootstrap): void
     {
-        return (new self())->setBootstrap($bootstrap);
+        self::$globalBootstrap = $bootstrap;
     }
 
     /**
@@ -146,7 +149,9 @@ class Task
         }
 
         $manager->setFailFast($this->failFast);
-        $manager->setBootstrap($this->bootstrap);
+
+        // Use instance bootstrap if set, otherwise fallback to global
+        $manager->setBootstrap($this->bootstrap ?? self::$globalBootstrap);
 
         return $manager;
     }
