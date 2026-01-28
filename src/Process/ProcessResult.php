@@ -1,6 +1,6 @@
 <?php
 
-namespace Nahid\PHPTask\Process;
+namespace Nahid\TaskPHP\Process;
 
 class ProcessResult
 {

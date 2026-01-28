@@ -1,13 +1,13 @@
 <?php
 
-namespace Nahid\PHPTask\Process;
+namespace Nahid\TaskPHP\Process;
 
 use Exception;
 use RuntimeException;
-use Nahid\PHPTask\Contracts\TaskInterface;
-use Nahid\PHPTask\Exceptions\TaskFailedException;
-use Nahid\PHPTask\Exceptions\TimeoutException;
-use Nahid\PHPTask\IPC\Serializer;
+use Nahid\TaskPHP\Contracts\TaskInterface;
+use Nahid\TaskPHP\Exceptions\TaskFailedException;
+use Nahid\TaskPHP\Exceptions\TimeoutException;
+use Nahid\TaskPHP\IPC\Serializer;
 
 
 class ProcessManager
@@ -15,7 +15,7 @@ class ProcessManager
     /** @var array<string, TaskInterface> */
     private $pendingTasks = [];
 
-    /** @var array<int, array{process: resource, pipes: array, taskName: string, startTime: int, outputBuffer: string}> */
+    /** @var array<int, array{process: resource, pipes: array, taskName: string, startTime: int, outputBuffer: string, errorBuffer: string}> */
     private $runningProcesses = [];
 
 
@@ -55,7 +55,7 @@ class ProcessManager
     /** @var string */
     private $workerPath;
 
-    /** @var \Nahid\PHPTask\Contracts\TaskBootstrapInterface|string|null */
+    /** @var \Nahid\TaskPHP\Contracts\TaskBootstrapInterface|string|null */
     private $bootstrap = null;
 
     public function __construct(array $tasks, int $concurrencyLimit = -1)
@@ -123,7 +123,7 @@ class ProcessManager
     /**
      * Set bootstrap for framework initialization.
      *
-     * @param \Nahid\PHPTask\Contracts\TaskBootstrapInterface|string|null $bootstrap
+     * @param \Nahid\TaskPHP\Contracts\TaskBootstrapInterface|string|null $bootstrap
      */
     public function setBootstrap($bootstrap): void
     {
@@ -244,7 +244,7 @@ class ProcessManager
             'taskName' => $taskName,
             'startTime' => time(),
             'outputBuffer' => '',
-            // 'errorBuffer' => '' // Could also capture stderr if we wanted
+            'errorBuffer' => ''
         ];
     }
 
@@ -273,9 +273,12 @@ class ProcessManager
         $map = [];
 
         foreach ($this->runningProcesses as $pid => $info) {
-            // We read from stdout (pipe 1)
+            // We read from stdout (pipe 1) and stderr (pipe 2)
             $read[] = $info['pipes'][1];
-            $map[(int) $info['pipes'][1]] = $pid;
+            $map[(int) $info['pipes'][1]] = ['pid' => $pid, 'type' => 1];
+
+            $read[] = $info['pipes'][2];
+            $map[(int) $info['pipes'][2]] = ['pid' => $pid, 'type' => 2];
         }
 
         if (empty($read)) {
@@ -286,27 +289,25 @@ class ProcessManager
         $numChanged = stream_select($read, $write, $except, $seconds, $microseconds);
 
         if ($numChanged === false) {
-            // Interrupted system call?
             return;
         }
 
         if ($numChanged > 0) {
             foreach ($read as $r) {
-                $pid = $map[(int) $r];
-                $this->readNonBlocking($pid);
+                $meta = $map[(int) $r];
+                $this->readNonBlocking($meta['pid'], $meta['type']);
             }
         }
     }
 
-    private function readNonBlocking(int $pid): void
+    private function readNonBlocking(int $pid, int $type): void
     {
         if (!isset($this->runningProcesses[$pid])) {
             return;
         }
 
         $pipes = $this->runningProcesses[$pid]['pipes'];
-        $reader = $pipes[1];
-
+        $reader = $pipes[$type];
 
         // Read available data until temporarily empty
         while (true) {
@@ -316,12 +317,14 @@ class ProcessManager
                 break;
             }
 
-            $this->runningProcesses[$pid]['outputBuffer'] .= $chunk;
+            if ($type === 1) {
+                $this->runningProcesses[$pid]['outputBuffer'] .= $chunk;
+            } else {
+                $this->runningProcesses[$pid]['errorBuffer'] .= $chunk;
+            }
 
             if (strlen($this->runningProcesses[$pid]['outputBuffer']) > $this->outputLimit) {
-                // Prevent OOM
                 proc_terminate($this->runningProcesses[$pid]['process']);
-                // We kill the process, which will be detected in checkChildren
             }
         }
     }
@@ -333,17 +336,22 @@ class ProcessManager
         }
 
         $pipes = $this->runningProcesses[$pid]['pipes'];
-        $reader = $pipes[1];
 
-        // Set to blocking mode to ensure we read everything remaining
-        stream_set_blocking($reader, true);
+        foreach ([1, 2] as $type) {
+            $reader = $pipes[$type];
+            stream_set_blocking($reader, true);
 
-        while (!feof($reader)) {
-            $chunk = fread($reader, 65536);
-            if ($chunk === false) {
-                break;
+            while (!feof($reader)) {
+                $chunk = fread($reader, 65536);
+                if ($chunk === false) {
+                    break;
+                }
+                if ($type === 1) {
+                    $this->runningProcesses[$pid]['outputBuffer'] .= $chunk;
+                } else {
+                    $this->runningProcesses[$pid]['errorBuffer'] .= $chunk;
+                }
             }
-            $this->runningProcesses[$pid]['outputBuffer'] .= $chunk;
         }
     }
 
@@ -363,19 +371,23 @@ class ProcessManager
         $exitCode = $status;
 
         try {
-            // We've been accumulating data in outputBuffer. 
-            // We don't need to read pipe here, just use the buffer.
-            // But we should make sure we read everything.
-            // The checkChildren calls readFromPipe one last time before this.
+            $rawPayload = trim($info['outputBuffer'] ?? '');
 
-            // Finalize
-            $rawPayload = $info['outputBuffer'] ?? '';
-            $data = $this->serializer->unserialize($rawPayload);
-            // $pipe->close(); // Already closed above
+            if ($rawPayload === '') {
+                $data = new RuntimeException("Child process produced no output. Possible immediate crash. Stderr: " . ($info['errorBuffer'] ?: 'None'));
+                $exitCode = $exitCode ?: 1;
+            } else {
+                $data = $this->serializer->unserialize($rawPayload);
 
-        } catch (Exception $e) {
-            $data = $e; // Failure reading pipe
-            $exitCode = 1; // Force failure
+                if ($data === false && $rawPayload !== serialize(false)) {
+                    $preview = strlen($rawPayload) > 100 ? substr($rawPayload, 0, 100) . '...' : $rawPayload;
+                    $data = new RuntimeException("Failed to unserialize child output. Raw output: " . $preview . " | Stderr: " . ($info['errorBuffer'] ?: 'None'));
+                    $exitCode = 1;
+                }
+            }
+        } catch (\Throwable $e) {
+            $data = new RuntimeException("Error processing child output: " . $e->getMessage() . " | Raw output: " . substr($info['outputBuffer'], 0, 100) . " | Stderr: " . ($info['errorBuffer'] ?: 'None'));
+            $exitCode = 1;
         }
 
         if ($exitCode === 0) {

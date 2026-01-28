@@ -1,6 +1,6 @@
 <?php
 
-namespace Nahid\PHPTask\IPC;
+namespace Nahid\TaskPHP\IPC;
 
 use Exception;
 use Throwable;

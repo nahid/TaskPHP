@@ -1,6 +1,6 @@
 <?php
 
-namespace Nahid\PHPTask\Exceptions;
+namespace Nahid\TaskPHP\Exceptions;
 
 class TimeoutException extends TaskException
 {

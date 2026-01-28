@@ -20,8 +20,8 @@ This is the most robust approach. It uses serialized objects to pass configurati
 Use the built-in `LaravelBootstrap` class:
 
 ```php
-use Nahid\PHPTask\Task;
-use Nahid\PHPTask\Bootstrap\LaravelBootstrap;
+use Nahid\TaskPHP\Task;
+use Nahid\TaskPHP\Bootstrap\LaravelBootstrap;
 
 // Register Laravel bootstrap
 $results = Task::registerBootstrap(new LaravelBootstrap(base_path()))
@@ -41,8 +41,8 @@ $results = Task::registerBootstrap(new LaravelBootstrap(base_path()))
 Use the built-in `WordPressBootstrap` class:
 
 ```php
-use Nahid\PHPTask\Task;
-use Nahid\PHPTask\Bootstrap\WordPressBootstrap;
+use Nahid\TaskPHP\Task;
+use Nahid\TaskPHP\Bootstrap\WordPressBootstrap;
 
 // Register WordPress bootstrap
 $results = Task::registerBootstrap(new WordPressBootstrap(ABSPATH . 'wp-load.php'))
@@ -61,8 +61,8 @@ $results = Task::registerBootstrap(new WordPressBootstrap(ABSPATH . 'wp-load.php
 You can create your own bootstrap by extending `AbstractBootstrap`:
 
 ```php
-use Nahid\PHPTask\Bootstrap\AbstractBootstrap;
-use Nahid\PHPTask\Contracts\TaskInterface;
+use Nahid\TaskPHP\Bootstrap\AbstractBootstrap;
+use Nahid\TaskPHP\Contracts\TaskInterface;
 
 class MyCustomBootstrap extends AbstractBootstrap
 {
@@ -93,7 +93,7 @@ class MyCustomBootstrap extends AbstractBootstrap
 ### 1. Basic Setup
 
 ```php
-use Nahid\PHPTask\Task;
+use Nahid\TaskPHP\Task;
 
 $wpBootstrap = '/path/to/wordpress/wp-load.php';
 
@@ -163,7 +163,7 @@ $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 ### 2. Use in Laravel
 
 ```php
-use Nahid\PHPTask\Task;
+use Nahid\TaskPHP\Task;
 
 $laravelBootstrap = base_path('laravel-bootstrap.php');
 
@@ -185,7 +185,7 @@ $results = Task::bootstrap($laravelBootstrap)
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Nahid\PHPTask\Task;
+use Nahid\TaskPHP\Task;
 
 class ProcessReportsCommand extends Command
 {
@@ -211,8 +211,8 @@ class ProcessReportsCommand extends Command
 ### 4. Queue Job Processing
 
 ```php
-use Nahid\PHPTask\Task;
-use Nahid\PHPTask\Contracts\TaskInterface;
+use Nahid\TaskPHP\Task;
+use Nahid\TaskPHP\Contracts\TaskInterface;
 
 class ProcessJobTask implements TaskInterface
 {

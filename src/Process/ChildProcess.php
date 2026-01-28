@@ -1,12 +1,12 @@
 <?php
 
-namespace Nahid\PHPTask\Process;
+namespace Nahid\TaskPHP\Process;
 
 use Exception;
 use Throwable;
-use Nahid\PHPTask\Contracts\TaskInterface;
-use Nahid\PHPTask\IPC\Pipe;
-use Nahid\PHPTask\IPC\Serializer;
+use Nahid\TaskPHP\Contracts\TaskInterface;
+use Nahid\TaskPHP\IPC\Pipe;
+use Nahid\TaskPHP\IPC\Serializer;
 
 class ChildProcess
 {

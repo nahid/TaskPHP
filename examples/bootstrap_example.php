@@ -2,10 +2,10 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use Nahid\PHPTask\Task;
-use Nahid\PHPTask\Bootstrap\AbstractBootstrap;
-use Nahid\PHPTask\Bootstrap\LaravelBootstrap;
-use Nahid\PHPTask\Bootstrap\WordPressBootstrap;
+use Nahid\TaskPHP\Task;
+use Nahid\TaskPHP\Bootstrap\AbstractBootstrap;
+use Nahid\TaskPHP\Bootstrap\LaravelBootstrap;
+use Nahid\TaskPHP\Bootstrap\WordPressBootstrap;
 
 /**
  * BOOTSTRAP SYSTEM EXAMPLES
@@ -54,7 +54,7 @@ class MyCustomFrameworkBootstrap extends AbstractBootstrap
     /**
      * Optional hook: Runs before every single task in this group.
      */
-    public function beforeTask(\Nahid\PHPTask\Contracts\TaskInterface $task): void
+    public function beforeTask(\Nahid\TaskPHP\Contracts\TaskInterface $task): void
     {
         echo "[Worker] Starting task transaction...\n";
     }

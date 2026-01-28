@@ -1,8 +1,8 @@
 <?php
 
-namespace Nahid\PHPTask;
+namespace Nahid\TaskPHP;
 
-use Nahid\PHPTask\Process\ProcessManager;
+use Nahid\TaskPHP\Process\ProcessManager;
 
 /**
  * Represents a group of deferred tasks.

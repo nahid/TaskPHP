@@ -1,12 +1,10 @@
 {
-    "name": "nahid/php-task",
-    "description": "Framework-agnostic PHP concurrency package using pcntl",
+    "name": "nahid/task-php",
+    "description": "Framework-agnostic PHP concurrency package using child processes",
     "type": "library",
     "license": "MIT",
     "require": {
         "php": "^7.4 || ^8.0",
-        "ext-pcntl": "*",
-        "ext-posix": "*",
         "laravel/serializable-closure": "^1.0"
     },
     "require-dev": {
@@ -14,19 +12,19 @@
     },
     "autoload": {
         "psr-4": {
-            "Nahid\\PHPTask\\": "src/"
+            "Nahid\\TaskPHP\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Nahid\\PHPTask\\Tests\\": "tests/",
-            "Nahid\\PHPTask\\Examples\\": "examples/"
+            "Nahid\\TaskPHP\\Tests\\": "tests/",
+            "Nahid\\TaskPHP\\Examples\\": "examples/"
         }
     },
     "authors": [
         {
-            "name": "Nahid",
-            "email": "nahid@example.com"
+            "name": "Nahid Bin Azhar",
+            "email": "nahid.dns@gmail.com"
         }
     ],
     "minimum-stability": "stable"

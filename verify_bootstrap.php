@@ -2,9 +2,9 @@
 
 require __DIR__ . '/vendor/autoload.php';
 
-use Nahid\PHPTask\Task;
-use Nahid\PHPTask\Bootstrap\AbstractBootstrap;
-use Nahid\PHPTask\Contracts\TaskInterface;
+use Nahid\TaskPHP\Task;
+use Nahid\TaskPHP\Bootstrap\AbstractBootstrap;
+use Nahid\TaskPHP\Contracts\TaskInterface;
 
 class VerificationBootstrap extends AbstractBootstrap
 {
@@ -23,7 +23,7 @@ class VerificationBootstrap extends AbstractBootstrap
         define('CONFIG_VALUE', $this->configValue);
     }
 
-    public function beforeTask(\Nahid\PHPTask\Contracts\TaskInterface $task): void
+    public function beforeTask(\Nahid\TaskPHP\Contracts\TaskInterface $task): void
     {
         // In a real worker, this would happen in a separate process
         // We will return this state in the task result to verify

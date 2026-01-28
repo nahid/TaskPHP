@@ -2,7 +2,7 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use Nahid\PHPTask\Task;
+use Nahid\TaskPHP\Task;
 
 // 1. Basic Async/Await
 echo "--- Running tasks concurrently and awaiting results ---\n";

@@ -1,9 +1,9 @@
 <?php
 
-namespace Nahid\PHPTask;
+namespace Nahid\TaskPHP;
 
 use Laravel\SerializableClosure\SerializableClosure;
-use Nahid\PHPTask\Contracts\TaskInterface;
+use Nahid\TaskPHP\Contracts\TaskInterface;
 
 class CallbackTask implements TaskInterface
 {

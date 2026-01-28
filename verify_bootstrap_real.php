@@ -2,8 +2,8 @@
 
 require __DIR__ . '/vendor/autoload.php';
 
-use Nahid\PHPTask\Task;
-use Nahid\PHPTask\Bootstrap\LaravelBootstrap;
+use Nahid\TaskPHP\Task;
+use Nahid\TaskPHP\Bootstrap\LaravelBootstrap;
 
 echo "--- Verifying Bootstrap with Autoloadable Class (LaravelBootstrap) ---\n";
 
@@ -19,7 +19,7 @@ try {
         ->await();
 
     echo "Result: " . print_r($results, true);
-} catch (\Nahid\PHPTask\Exceptions\TaskFailedException $e) {
+} catch (\Nahid\TaskPHP\Exceptions\TaskFailedException $e) {
     echo "Caught expected error: " . $e->getMessage() . "\n";
     if (strpos($e->getMessage(), 'missing-laravel-path') !== false) {
         echo "\nVerification: SUCCESS! The worker correctly identified and attempted to run the Bootstrap object.\n";

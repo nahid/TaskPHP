@@ -20,7 +20,7 @@ composer require nahid/php-task
 
 ### 1. Simple Async Execution
 ```php
-use Nahid\PHPTask\Task;
+use Nahid\TaskPHP\Task;
 
 $results = Task::async([
     'task1' => fn() => 10,

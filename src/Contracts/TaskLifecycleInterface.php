@@ -1,6 +1,6 @@
 <?php
 
-namespace Nahid\PHPTask\Contracts;
+namespace Nahid\TaskPHP\Contracts;
 
 /**
  * Optional lifecycle hooks for task execution.

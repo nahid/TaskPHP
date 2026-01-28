@@ -1,8 +1,8 @@
 <?php
 
-namespace Nahid\PHPTask\IPC;
+namespace Nahid\TaskPHP\IPC;
 
-use Nahid\PHPTask\Exceptions\TaskException;
+use Nahid\TaskPHP\Exceptions\TaskException;
 use RuntimeException;
 
 class Pipe

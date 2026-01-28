@@ -3,7 +3,7 @@
 Welcome, AI Agent! This document reflects the **refactored minimal API** of TaskPHP.
 
 ## Project Overview
-**TaskPHP** (`Nahid\PHPTask`) is a high-performance concurrency library for PHP 7.4+. It uses child processes (`proc_open`) and IPC over pipes.
+**TaskPHP** (`Nahid\TaskPHP`) is a high-performance concurrency library for PHP 7.4+. It uses child processes (`proc_open`) and IPC over pipes.
 
 ## The Minimal API
 The library has been refactored to prioritize the `async/await` pattern. Legacy methods like `defer`, `concurrent`, and `background` have been removed.

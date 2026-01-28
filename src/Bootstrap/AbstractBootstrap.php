@@ -1,10 +1,10 @@
 <?php
 
-namespace Nahid\PHPTask\Bootstrap;
+namespace Nahid\TaskPHP\Bootstrap;
 
-use Nahid\PHPTask\Contracts\TaskBootstrapInterface;
-use Nahid\PHPTask\Contracts\TaskLifecycleInterface;
-use Nahid\PHPTask\Contracts\TaskInterface;
+use Nahid\TaskPHP\Contracts\TaskBootstrapInterface;
+use Nahid\TaskPHP\Contracts\TaskLifecycleInterface;
+use Nahid\TaskPHP\Contracts\TaskInterface;
 
 /**
  * Abstract base class for bootstrap implementations.

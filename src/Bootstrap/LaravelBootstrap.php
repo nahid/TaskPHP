@@ -1,8 +1,8 @@
 <?php
 
-namespace Nahid\PHPTask\Bootstrap;
+namespace Nahid\TaskPHP\Bootstrap;
 
-use Nahid\PHPTask\Contracts\TaskInterface;
+use Nahid\TaskPHP\Contracts\TaskInterface;
 
 /**
  * Laravel framework bootstrap for background tasks.

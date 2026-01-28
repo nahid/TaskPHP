@@ -1,6 +1,6 @@
 <?php
 
-namespace Nahid\PHPTask\Contracts;
+namespace Nahid\TaskPHP\Contracts;
 
 /**
  * Minimal bootstrap interface for framework initialization.

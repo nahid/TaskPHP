@@ -1,21 +1,21 @@
 <?php
 
+// Start output buffering as early as possible to prevent any accidental output from corrupting the IPC
+ob_start();
+
 require __DIR__ . '/../../vendor/autoload.php';
 
-use Nahid\PHPTask\IPC\Serializer;
-use Nahid\PHPTask\Contracts\TaskBootstrapInterface;
-use Nahid\PHPTask\Contracts\TaskLifecycleInterface;
+use Nahid\TaskPHP\IPC\Serializer;
+use Nahid\TaskPHP\Contracts\TaskBootstrapInterface;
+use Nahid\TaskPHP\Contracts\TaskLifecycleInterface;
 
 $serializer = new Serializer();
-
-// Start output buffering to prevent any accidental output from corrupting the IPC
-ob_start();
 
 // Read serialized payload from STDIN
 $input = stream_get_contents(STDIN);
 
 if ($input === false || $input === '') {
-    if (ob_get_level() > 0) {
+    while (ob_get_level() > 0) {
         ob_end_clean();
     }
     exit(1);
@@ -70,8 +70,8 @@ try {
 
     $output = $serializer->serialize($result);
 
-    // Clean any accidental output from the buffer
-    if (ob_get_level() > 0) {
+    // Clean all accidental output from the buffer
+    while (ob_get_level() > 0) {
         ob_end_clean();
     }
 
@@ -86,8 +86,8 @@ try {
     exit(0);
 
 } catch (Throwable $e) {
-    // If we're here, something failed. Clean the buffer.
-    if (ob_get_level() > 0) {
+    // If we're here, something failed. Clean all buffers.
+    while (ob_get_level() > 0) {
         ob_end_clean();
     }
 

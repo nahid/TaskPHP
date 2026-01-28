@@ -1,9 +1,9 @@
 <?php
 
-namespace Nahid\PHPTask\Tests\Unit;
+namespace Nahid\TaskPHP\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use Nahid\PHPTask\IPC\Serializer;
+use Nahid\TaskPHP\IPC\Serializer;
 use Exception;
 
 class SerializerTest extends TestCase

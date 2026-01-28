@@ -1,11 +1,11 @@
 <?php
 
-namespace Nahid\PHPTask\Tests\Integration;
+namespace Nahid\TaskPHP\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
-use Nahid\PHPTask\Task;
-use Nahid\PHPTask\Exceptions\TaskFailedException;
-use Nahid\PHPTask\Exceptions\TimeoutException;
+use Nahid\TaskPHP\Task;
+use Nahid\TaskPHP\Exceptions\TaskFailedException;
+use Nahid\TaskPHP\Exceptions\TimeoutException;
 
 class TaskTest extends TestCase
 {

@@ -1,9 +1,9 @@
 <?php
 
-namespace Nahid\PHPTask;
+namespace Nahid\TaskPHP;
 
-use Nahid\PHPTask\Process\ProcessManager;
-use Nahid\PHPTask\Contracts\TaskBootstrapInterface;
+use Nahid\TaskPHP\Process\ProcessManager;
+use Nahid\TaskPHP\Contracts\TaskBootstrapInterface;
 
 class Task
 {
