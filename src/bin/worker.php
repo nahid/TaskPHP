@@ -105,7 +105,13 @@ try {
     }
 
     // Write result to STDOUT
-    fwrite(STDOUT, $output);
+    // We wrap this in a try-catch because if the task was "forgotten", 
+    // the parent process might have already exited and closed the pipe.
+    try {
+        @fwrite(STDOUT, $output);
+    } catch (\Throwable $pipeError) {
+        // Pipe is broken, nowhere to send the result.
+    }
 
     // Call shutdown hook if available
     if ($bootstrap instanceof TaskLifecycleInterface) {
@@ -130,8 +136,12 @@ try {
     }
 
     // Write error to STDOUT (serialized exception)
-    $output = $serializer->serialize($e);
-    fwrite(STDOUT, $output);
+    try {
+        $output = $serializer->serialize($e);
+        @fwrite(STDOUT, $output);
+    } catch (\Throwable $pipeError) {
+        // Parent is gone.
+    }
 
     // Call shutdown hook even on error
     if ($bootstrap instanceof TaskLifecycleInterface) {
