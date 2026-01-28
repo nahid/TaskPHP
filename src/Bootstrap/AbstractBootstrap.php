@@ -71,10 +71,17 @@ abstract class AbstractBootstrap implements TaskBootstrapInterface, TaskLifecycl
         $reflection = new \ReflectionClass($this);
         $data = [];
 
-        // Get all properties (including readonly)
+        // Get all properties
         foreach ($reflection->getProperties() as $property) {
+            $name = $property->getName();
+
+            // Skip runtime properties like $app or properties starting with underscore
+            if ($name === 'app' || strpos($name, '_') === 0) {
+                continue;
+            }
+
             $property->setAccessible(true);
-            $data[$property->getName()] = $property->getValue($this);
+            $data[$name] = $property->getValue($this);
         }
 
         return $data;

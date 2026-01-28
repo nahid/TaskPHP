@@ -37,26 +37,46 @@ class LaravelBootstrap extends AbstractBootstrap
      */
     public function bootstrap(): void
     {
-        // Load Composer autoloader
+        // Load Composer autoloader if not already loaded
+        if (!file_exists($this->basePath . '/vendor/autoload.php')) {
+            throw new \RuntimeException("Laravel vendor directory not found at: {$this->basePath}/vendor");
+        }
+
         require_once $this->basePath . '/vendor/autoload.php';
 
         // Create Laravel application instance
-        $this->app = require_once $this->basePath . '/bootstrap/app.php';
+        // We use require instead of require_once because app.php returns the instance
+        $this->app = require $this->basePath . '/bootstrap/app.php';
+
+        if (!$this->app instanceof \Illuminate\Foundation\Application) {
+            // If it returns true (already required), we might have a problem or need to find it
+            if (interface_exists(\Illuminate\Contracts\Foundation\Application::class)) {
+                $this->app = \Illuminate\Support\Facades\Facade::getFacadeApplication() ?: app();
+            }
+        }
+
+        if (!$this->app) {
+            throw new \RuntimeException("Failed to initialize Laravel application instance.");
+        }
 
         // Set environment
-        $this->app->detectEnvironment(fn() => $this->environment);
+        if (method_exists($this->app, 'detectEnvironment')) {
+            $this->app->detectEnvironment(fn() => $this->environment);
+        }
+
+        // Ensure Facades work
+        if (class_exists(\Illuminate\Support\Facades\Facade::class)) {
+            \Illuminate\Support\Facades\Facade::setFacadeApplication($this->app);
+        }
 
         // Bootstrap the application kernel
-        // This loads configuration, service providers, facades, etc.
         $kernel = $this->app->make(\Illuminate\Contracts\Console\Kernel::class);
         $kernel->bootstrap();
 
-        // Now all Laravel features are available:
-        // - Eloquent models (User::find())
-        // - Facades (DB::, Cache::, etc.)
-        // - Helper functions (config(), app(), etc.)
-        // - Service container
-        // - Queue system
+        // Ensure Eloquent has a connection resolver
+        if ($this->app->bound('db') && class_exists(\Illuminate\Database\Eloquent\Model::class)) {
+            \Illuminate\Database\Eloquent\Model::setConnectionResolver($this->app['db']);
+        }
     }
 
     /**
