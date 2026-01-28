@@ -6,17 +6,14 @@ use Nahid\TaskPHP\Task;
 
 // 1. Basic Async/Await
 echo "--- Running tasks concurrently and awaiting results ---\n";
-$results = Task::limit(2)
-    ->async([
-        'task1' => fn() => "Result from task 1",
-        'task2' => function () {
-            sleep(1);
-            return "Result from task 2";
-        }
-    ])
-    ->await();
+$vals = Task::async([
+    'val' => function () {
+        sleep(2);
+        return "5";
+    }
+])->await();
 
-print_r($results);
+print_r($vals);
 
 // 2. Await with callback processing
 echo "\n--- Processing results with a callback ---\n";

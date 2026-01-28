@@ -3,7 +3,36 @@
 // Start output buffering as early as possible to prevent any accidental output from corrupting the IPC
 ob_start();
 
-require __DIR__ . '/../../vendor/autoload.php';
+$autoloadPath = null;
+$currentDir = __DIR__;
+while ($currentDir !== '/' && $currentDir !== '.') {
+    $path = $currentDir . '/vendor/autoload.php';
+    if (file_exists($path)) {
+        $autoloadPath = $path;
+        break;
+    }
+
+    // Check one level higher
+    $parentDir = dirname($currentDir);
+    if ($parentDir === $currentDir)
+        break;
+    $currentDir = $parentDir;
+}
+
+if (!$autoloadPath && file_exists(__DIR__ . '/../../vendor/autoload.php')) {
+    $autoloadPath = __DIR__ . '/../../vendor/autoload.php';
+}
+
+if (!$autoloadPath && file_exists(__DIR__ . '/../../../../autoload.php')) {
+    $autoloadPath = __DIR__ . '/../../../../autoload.php';
+}
+
+if (!$autoloadPath) {
+    fwrite(STDERR, "Could not find autoloader. Check your vendor directory.\n");
+    exit(1);
+}
+
+require $autoloadPath;
 
 use Nahid\TaskPHP\IPC\Serializer;
 use Nahid\TaskPHP\Contracts\TaskBootstrapInterface;

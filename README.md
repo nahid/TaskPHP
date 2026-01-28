@@ -5,7 +5,7 @@ A framework-agnostic PHP concurrency library designed for high-performance task 
 ## Installation
 
 ```bash
-composer require nahid/php-task
+composer require nahid/task-php
 ```
 
 ## Features
